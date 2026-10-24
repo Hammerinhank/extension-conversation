@@ -16,25 +16,37 @@ function analysePage() {
     !!document.querySelector('meta[name="generator"][content*="Google Sites" i]');
   const isGoogleSite = isSitesHost || hasSitesMarker;
 
-  if (!isGoogleSite) return { isGoogleSite: false, titles: [] };
+  if (!isGoogleSite) return { isGoogleSite: false, mode: null, titles: [] };
 
-  // 2. Groupes réductibles : en-têtes repliables (aria-expanded),
-  //    hors menu de navigation du site.
+  // 2. Mode : l'éditeur utilise des balises <tile>, la page publiée non.
+  const mode = document.querySelector("tile") ? "édition" : "publié";
+
+  // 3. Groupes réductibles = titres (h1..h6) accompagnés d'un chevron (svg).
+  //    - page publiée : le chevron est DANS le titre ;
+  //    - éditeur      : le chevron est à côté du bloc de texte, dans la même ligne.
+  //    Un titre ordinaire n'a pas de svg : il est ignoré.
   const seen = new Set();
   const titles = [];
-  document.querySelectorAll("[aria-expanded]").forEach((el) => {
-    if (el.closest('nav, [role="navigation"], header')) return;
-    if (el.matches("input, select, textarea")) return;
-    const text = (el.innerText || el.textContent || "")
-      .split("\n").map((s) => s.trim()).filter(Boolean)[0];
+  document.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((h) => {
+    if (h.closest('nav, [role="navigation"]')) return;
+
+    let isGroup = !!h.querySelector("svg");
+    if (!isGroup) {
+      const tile = h.closest("tile");
+      isGroup = !!(tile && tile.parentElement && tile.parentElement.querySelector("svg"));
+    }
+    if (!isGroup) return;
+
+    const text = (h.textContent || "").replace(/ /g, " ").replace(/\s+/g, " ").trim();
     if (!text) return;
-    const key = text + "|" + (el.getBoundingClientRect().top | 0);
+
+    const key = text + "|" + Math.round(h.getBoundingClientRect().top);
     if (seen.has(key)) return;
     seen.add(key);
     titles.push(text);
   });
 
-  return { isGoogleSite: true, titles };
+  return { isGoogleSite: true, mode, titles };
 }
 
 (async () => {
@@ -49,7 +61,7 @@ function analysePage() {
       setStatus("Cette page n'est pas une page Google Sites.", false);
       return;
     }
-    setStatus("Page Google Sites détectée ✔", true);
+    setStatus("Page Google Sites détectée ✔ (mode " + result.mode + ")", true);
 
     if (!result.titles.length) {
       const li = document.createElement("li");
