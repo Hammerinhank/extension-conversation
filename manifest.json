@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Groupes réductibles Google Sites",
+  "version": "1.0",
+  "description": "Vérifie que la page est un Google Site et liste les titres des groupes réductibles.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_title": "Lister les groupes réductibles",
+    "default_popup": "popup.html"
+  }
+}
