@@ -36,18 +36,24 @@ function inPage(action, index, expectedTitle) {
   const mode = document.querySelector("tile") ? "édition" : "publié";
   const clean = (s) => (s || "").replace(/ /g, " ").replace(/\s+/g, " ").trim();
 
-  // 3. Groupes réductibles = titres (h1..h6) accompagnés d'un chevron (svg).
-  //    - page publiée : le chevron est DANS le titre ;
-  //    - éditeur      : le chevron est à côté du bloc de texte, dans la même ligne.
+  // 3. Groupes réductibles = titres (h1..h6) qui servent d'en-tête de groupe.
+  //    Même règle en mode publié et en édition (les icônes svg sont présentes sur tous
+  //    les titres et toutes les lignes : elles ne servent pas à les distinguer) :
+  //    le titre est seul dans son bloc de texte, dans la PREMIÈRE ligne d'un groupe
+  //    qui compte au moins 2 lignes (titre + contenu).
+  const ROW = ".oKdM2c, .row_Default";
+  const GROUP = '[jsname="F57UId"]';
   const heads = [];
   const seen = new Set();
   document.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((h) => {
     if (h.closest('nav, [role="navigation"]')) return;
-    let isGroup = !!h.querySelector("svg");
-    if (!isGroup) {
-      const tile = h.closest("tile");
-      isGroup = !!(tile && tile.parentElement && tile.parentElement.querySelector("svg"));
-    }
+    const row = h.closest(ROW);
+    const g = row && row.closest(GROUP);
+    if (!g) return;
+    const rows = [...g.querySelectorAll(ROW)].filter((r) => r.closest(GROUP) === g);
+    const box = h.closest('[role="textbox"], .tyJCtd');
+    const titleAlone = !!box && clean(box.textContent) === clean(h.textContent);
+    const isGroup = rows.length >= 2 && rows[0] === row && titleAlone;
     if (!isGroup) return;
     const text = clean(h.textContent);
     if (!text) return;
