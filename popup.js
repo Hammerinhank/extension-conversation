@@ -14,7 +14,7 @@ let state = { titles: [], pageTitle: "", url: "", mode: "" };
 let cancelled = false;
 
 function setStatus(text, ok) {
-  statusEl.textContent = text;
+  statusEl.textContent = text + "  [v5]";
   statusEl.className = "status " + (ok ? "ok" : "ko");
 }
 
